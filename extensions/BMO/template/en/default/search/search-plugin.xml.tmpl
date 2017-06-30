@@ -1,0 +1,17 @@
+[%# This Source Code Form is subject to the terms of the Mozilla Public
+  # License, v. 2.0. If a copy of the MPL was not distributed with this
+  # file, You can obtain one at http://mozilla.org/MPL/2.0/.
+  #
+  # This Source Code Form is "Incompatible With Secondary Licenses", as
+  # defined by the Mozilla Public License, v. 2.0.
+  #%]
+
+[% PROCESS global/variables.none.tmpl %]
+<?xml version="1.0" encoding="UTF-8"?>
+<OpenSearchDescription xmlns="http://a9.com/-/spec/opensearch/1.1/">
+<ShortName>[% terms.BugzillaTitle %]</ShortName>
+<Description>[% terms.BugzillaTitle %] Quick Search</Description>
+<InputEncoding>UTF-8</InputEncoding>
+<Image height="16" width="16" type="image/vnd.microsoft.icon">https://bugzilla.mozilla.org/extensions/BMO/web/images/favicon.ico</Image>
+<Url type="text/html" method="GET" template="[% urlbase FILTER xml %]buglist.cgi?quicksearch={searchTerms}"/>
+</OpenSearchDescription>

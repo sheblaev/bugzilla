@@ -1,0 +1,33 @@
+[%# This Source Code Form is subject to the terms of the Mozilla Public
+  # License, v. 2.0. If a copy of the MPL was not distributed with this
+  # file, You can obtain one at http://mozilla.org/MPL/2.0/.
+  #
+  # This Source Code Form is "Incompatible With Secondary Licenses", as
+  # defined by the Mozilla Public License, v. 2.0.
+  #%]
+
+[% USE Bugzilla %]
+[% cgi = Bugzilla.cgi %]
+
+[%- MACRO cmt_field(name, content) BLOCK -%]
+>> [% content FILTER clean_text %]
+[%+ cgi.param(name) %]
+
+[% END %]
+
+[% cmt_field('mozilla_team_dept', 'Mozilla Team/Department') %]
+[% cmt_field('relationship_development', 'What kind of relationships are you looking to develop?') %]
+[% cmt_field('relationship_goal', 'How will you nurture these relationships?') %]
+[% IF cgi.param('new_program_request') == 'Yes' %]
+[% cmt_field('way_to_solve', 'Do you currently have a way to solve for this?') %]
+[% cmt_field('pain_points', 'What are the pain points in the current process?') %]
+[% cmt_field('perceived_benefits', 'What are the perceived benefits to changing the process?') %]
+[% cmt_field('data_size', 'How large is the data set?') %]
+[% cmt_field('how_many_train_people', 'How many people on your team need access or training?') %]
+[% END %]
+[% cmt_field('kpis', 'How will success be measured?') %]
+[% cmt_field('risk', 'What is the risk to not doing this?') %]
+[% cmt_field('timeline_for_launch', 'What\'s the timeline for launch?') %]
+[% IF cgi.param('other_info') %]
+[% cmt_field('other_info', 'Any other info we should know?') %]
+[% END %]

@@ -1,0 +1,49 @@
+[%# This Source Code Form is subject to the terms of the Mozilla Public
+  # License, v. 2.0. If a copy of the MPL was not distributed with this
+  # file, You can obtain one at http://mozilla.org/MPL/2.0/.
+  #
+  # This Source Code Form is "Incompatible With Secondary Licenses", as
+  # defined by the Mozilla Public License, v. 2.0.
+  #%]
+
+[% IF !javascript_urls %]
+  [% javascript_urls = [] %]
+[% END %]
+
+[% IF template.name == 'list/list.html.tmpl' %]
+  [% javascript_urls.push('extensions/BMO/web/js/sorttable.js') %]
+[% END %]
+
+[% IF !bodyclasses %]
+  [% bodyclasses = [] %]
+[% END %]
+
+[%# Change the background/border for bugs/attachments in certain bug groups %]
+[% IF template.name == 'attachment/edit.html.tmpl' 
+      || template.name == 'attachment/create.html.tmpl'
+      || template.name == 'attachment/diff-header.html.tmpl' %]
+  [% style_urls.push("skins/custom/bug_groups.css") %]
+
+  [% IF template.name == 'attachment/edit.html.tmpl'
+        || template.name == 'attachment/diff-header.html.tmpl' %]
+    [% IF bodyclasses == 'no_javascript' %]
+      [% bodyclasses = ['no_javascript'] %] 
+    [% END %]
+    [% FOREACH group = attachment.bug.groups_in %]
+      [% bodyclasses.push("bz_group_$group.name") %]
+    [% END %]
+  [% END %]
+
+  [% IF template.name == 'attachment/create.html.tmpl' %]
+    [% FOREACH group = bug.groups_in %]
+      [% bodyclasses.push("bz_group_$group.name") %]
+    [% END %]
+  [% END %]
+[% END %]
+
+[%# BMO - add user context menu %]
+[% IF user.id %]
+  [% jquery.push('contextMenu') %]
+  [% style_urls.push('js/jquery/plugins/contextMenu/contextMenu.css') %]
+  [% javascript_urls.push('extensions/BMO/web/js/edituser_menu.js') %]
+[% END %]

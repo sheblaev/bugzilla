@@ -1,0 +1,387 @@
+[%#
+  # This Source Code Form is subject to the terms of the Mozilla Public
+  # License, v. 2.0. If a copy of the MPL was not distributed with this
+  # file, You can obtain one at http://mozilla.org/MPL/2.0/.
+  #
+  # The Initial Developer of the Original Code is "Nokia Corporation"
+  # Portions created by the Initial Developer are Copyright (C) 2010 the
+  # Initial Developer. All Rights Reserved.
+  #
+  # Contributor(s):
+  #   David Wilson <ext-david.3.wilson@nokia.com>
+  #   Stephen Jayna <ext-stephen.jayna@nokia.com>
+  #   Allan Savolainen <ext-jari.a.savolainen@nokia.com>
+  #   Pami Ketolainen <pami.ketolainen@jollamobile.com>
+  #%]
+
+[% USE Bugzilla %]
+
+[% PROCESS "global/field-descs.none.tmpl" %]
+[% field_descs.short_short_desc     = "Summary (first 60 characters)" %]
+[% field_descs.short_desc           = "Full Summary" %]
+[% field_descs.assigned_to_realname = "Assignee Realname" %]
+[% field_descs.reporter_realname    = "Reporter Realname" %]
+[% field_descs.qa_contact_realname  = "QA Contact Realname" %]
+
+[% javascript = BLOCK %]
+    var DASHBOARD_CONFIG = [% dashboard_config || 'null' %];
+    var BUGLIST_COLUMNS = {
+    [% FOREACH column = columns %]
+        "[% column FILTER js %]": "[% (field_descs.${column} || column) FILTER js %]",
+    [% END %]
+    };
+[% END %]
+
+[% PROCESS global/header.html.tmpl
+    title = "Dashboard"
+    style_urls = [
+        "extensions/Dashboard/web/css/dashboard.css",
+        "extensions/Dashboard/web/css/colorbox.css",]
+
+    javascript_urls = [
+        "extensions/Dashboard/web/js/colResizable-1.3.min.js",
+        "extensions/Dashboard/web/js/jquery.colorbox-min.js",
+        "extensions/Dashboard/web/js/jquery.tablesorter-update.js",
+        "extensions/Dashboard/web/js/jquery.csv.min.js",
+        "extensions/Dashboard/web/js/dashboard.js",
+        "extensions/Dashboard/web/js/widgets.js"]
+%]
+
+<table id="overlay-controls">
+    <tr>
+        <td>
+            <a href="#" id="overlay-info">
+                <span class="name"></span>
+                <span class="workspace">(workspace)</span>
+                <span class="shared">(shared)</span>
+                <span class="pending">(pending)</span>
+                <span class="unsaved">(unsaved)</span>
+            </a>
+        </td>
+        <td id="buttons">
+            <span>
+                <button name="newoverlay" type="button">New Overlay</button>
+                <button name="openoverlay" type="button">Open Overlay</button>
+                <button name="saveoverlay" type="button">Save Overlay</button>
+                <button name="saveoverlayas" type="button">Save Overlay As...</button>
+                <button name="deleteoverlay" type="button">Delete Overlay</button>
+                <button name="publishoverlay" type="button">Publish Overlay</button>
+                <button name="withholdoverlay" type="button">Withhold Overlay</button>
+            </span>
+            <span>
+                <button name="overlaysettings" type="button">Overlay Settings</button>
+                <button name="addcolumn" type="button">Add column</button>
+                <button name="removecolumn" type="button">Remove column</button>
+                <button name="resetcolumns" type="button">Reset column widths</button>
+            </span>
+            <span>
+                <select name="widgettype" title="Add widget"
+                    class="ui-widget ui-corner-all">
+                    <option value="url">URL</option>
+                    <option value="rss">RSS</option>
+                    <option value="bugs">[% terms.Bug %] list</option>
+                    <option value="mybugs">My [% terms.Bugs %]</option>
+                    <option value="text">Text</option>
+                    [% Hook.process("widget-type") %]
+                </select>
+                <button name="addwidget" type="button">Add widget</button>
+            </span>
+        </td>
+        <td><span id="dashboard_notify"></span></td>
+    </tr>
+</table>
+
+<table id="overlay">
+<tr id="overlay-header"></tr>
+<tr>
+    <td id="overlay-top" class="overlay-column" valign="top"></td>
+</tr>
+<tr id="overlay-columns"></tr>
+</table>
+
+<br clear="both">
+
+
+<div style="display: none;"> <!-- hide templates -->
+    <div align="center" id="dash-template-loader" class="loader ui-corner-all">
+    </div>
+
+    <!-- Overlay templates -->
+
+    <div id="dash-template-browser_warning">
+        <p style="color: red">
+        Your web browser is not fully tested with the Dashboard, please use
+        Firefox if you experience problems.
+        </p>
+    </div>
+
+    <div id="dash-template-browser_block">
+        <h2 style="text-align: center">Your web browser is not compatible with
+        Dashboard; please use Firefox instead.</h2>
+    </div>
+
+    <div id="dash-template-welcome-text">
+<p>To begin, please load an existing overlay using the Open icon in the toolbar
+above, or alternatively you may clear the workspace and begin building a new
+overlay from scratch.</p>
+
+<h3>The dashboard toolbar buttons:</h3>
+<ul>
+    <li>New Overlay - Opens a new empty dashboard overlay</li>
+    <li>Open Overlay - Fetches the list of existing overlays and opens a dialog
+    where you can open one of them.</li>
+    <li>Save Overlay - Saves the changes in current overlay. If this is a new
+    overlay, it will pop up a dialog for entering the overlay name and
+    description.</li>
+    <li>Save Overlay As... - Allows saving an existing overlay as a new
+    instance.</li>
+    <li>Delete Overlay - Deletes the currently opened overlay. This is only
+    visible if the overlay has been saved and you are the owner of the overlay.
+    </li>
+    <li>Publish Overlay - Publishes the shared overlay that is pending approval.
+    This is only visible to admins.</li>
+    <li>Overlay Settings - Opens up a dialog where you can change overlay name,
+    description and shared status.</li>
+    <br />
+    <li>Add Widget select box and button - Allows you to create a new widget of
+    the selected type.</li>
+    <br />
+    <li>Add column - Adds a new column to the overlay on the right.</li>
+    <li>Remove column - Removes the rightmost column from the overlay. Any
+    widgets the will be moved to the column before that.</li>
+    <li>Reset column widths - Makes the columns equaly spaced.</li>
+</ul>
+
+<h3>The overlay</h3>
+<p>The overlay is laid out in columns which each can contain one or more
+widgets. There is a top 'column' which spans the whole page width and below
+that, one or more (up to 4) columns side by side. The lower column widths can
+be changed by dragging from the column edge or resize handles at the top.</p>
+
+<p>Overlays can be saved as shared, so that other user can view it. When
+overlay is set as shared is it not visible to others than admin users, until
+admin approves and publishes the overlay.</p>
+
+<h3>Widgets</h3>
+<p>Widgets can be organized in overlay columns using drag and drop. The column
+width determines the widget width, but height can be adjusted by dragging the 
+bottom edge of the widget.</p>
+
+<p>Widget title bar contains buttons for
+<ul>
+    <li>Refreshing the widget content.</li>
+    <li>Opening the widget settings dialog.</li>
+    <li>Removing the widget.</li>
+    <li>Minimizing the widget, so that only the title bar is wisible.</li>
+    <li>And maximizing the widget to full browser window.</li>
+</ul>
+</p>
+</div>
+
+    <div id="overlay-open" title="Load Overlay" class="settings-dialog">
+        <b>Shared overlays</b>
+        <ul class="overlay-list shared" width="100%"></ul>
+        <div class="pending-list">
+            <b>Pending overlays</b>
+            <ul class="overlay-list pending" width="100%"></ul>
+        </div>
+        <b>My overlays</b>
+        <ul class="overlay-list owner" width="100%"></ul>
+
+    </div>
+
+    <li id="template-overlay-entry" class="overlay-entry">
+        <div>
+            <div>
+                <button class="name" type="button"></button>
+                <button type="button">Details</button>
+            </div>
+            <div class="details">
+                <div class="states">
+                    <span class="workspace">(workspace)</span>
+                    <span class="shared">(shared)</span>
+                    <span class="pending">(pending)</span>
+                </div>
+                <div class="description"></div>
+                <span class="modified"></span> - <span class="owner"></span>
+            </div>
+        </div>
+        <div>
+        </div>
+    </li>
+    
+    <div id="overlay-settings" title="Overlay settings" class="settings-dialog">
+        <form>
+        <fieldset name="common">
+            <legend>Overlay</legend>
+            <ul class="settings">
+            <li>
+                <label>Name:</label>
+                <input name="name" class="settings-field"/>
+            </li>
+            <li>
+                <label>Description:</label>
+                <input name="description" class="settings-field" />
+            </li>
+            <li>
+                <label>Shared:</label>
+                <input name="shared" type="checkbox" class="settings-field" />
+            </li>
+            <!--li>
+                <label>Workspace:</label>
+                <input name="workspace" type="checkbox" class="settings-field" />
+            </li-->
+            </ul>
+        </fieldset>
+        </form>
+    </div>
+
+
+    <!-- Widget templates -->
+
+    <div class="widget ui-widget ui-corner-all" id="widget-template">
+        <div class="widget-header ui-widget-header ui-corner-top">
+            <span class="widget-title"></span>
+            <span class="widget-buttons">
+                <button name="refresh" title="Refresh" type="button">R</button>
+                <button name="edit" title="Edit" type="button">E</button>
+                <button name="remove" title="Remove" type="button">X</button>
+                <button name="minimize" title="Minimize" type="button">-</button>
+                <button name="maximize" title="Maximize" type="button">+</button>
+            </span>
+        </div>
+        <div class="settings-dialog" title="Widget settings" style="display:none;">
+            <form>
+            <fieldset name="common">
+                <legend>Widget</legend>
+                <li>
+                    <label>Title:</label>
+                    <input name="name" class="settings-field"/>
+                </li>
+                <li>
+                    <label>Color:</label>
+                    <select name="color" class="settings-field">
+                    </select>
+                </li>
+                <li>
+                    <label>Reload:</label>
+                    <select name="refresh" class="settings-field">
+                        <option value="0">no refresh</option>
+                        <option value="15">every 15 seconds</option>
+                        <option value="60">every minute</option>
+                        <option value="300">every 5 minutes</option>
+                        <option value="900">every 15 minutes</option>
+                        <option value="1800">every 30 minutes</option>
+                    </select>
+                </li>
+            </fieldset>
+            </form>
+        </div>
+        <div class="widget-container ui-widget-content ui-corner-bottom">
+            <div class="widget-status"></div>
+            <div class="widget-content"></div>
+        </div>
+    </div>
+
+    <p class="ui-state-error" id="widget-error-template">
+        Error occured: <span class="error-text"></span>
+    </p>
+
+    <!-- Text widget -->
+    <div class="text" id="widget-template-text">
+    </div>
+
+    <fieldset id="widget-settings-template-text">
+        <legend>Text</legend>
+        <textarea style="width: 100%; height: 10em;" name="text"
+            class="custom-field"></textarea>
+    </fieldset>
+
+    <!-- URL widget -->
+    <iframe id="widget-template-url" target="new" class="widget_iframe"
+            frameborder="0" scrolling="auto">
+    </iframe>
+
+    <fieldset id="widget-settings-template-url">
+        <legend>URL options</legend>
+        <li>
+            <label>URL:</label>
+            <input name="url" class="custom-field"/>
+        </li>
+
+        <li>
+            <label>Selector:</label>
+            <input name="selector" class="custom-field"/>
+        </li>
+        <li>
+            <small>Supported syntax:
+                <a target="_new" href="http://www.w3.org/TR/CSS2/selector.html#pattern-matching">CSS</a>,
+                <a target="_new" href="http://api.jquery.com/category/selectors/">jQuery</a>
+            </small>
+        </li>
+
+        <li>
+            <button type="button" name="loadurl">Load URL</button>
+        </li>
+    </fieldset>
+
+    <!-- RSS widget -->
+    <fieldset id="widget-settings-template-rss">
+        <legend>RSS options</legend>
+        <li>
+            <label>URL:</label>
+            <input name="url" class="custom-field"/>
+        </li>
+        <li>
+            <label>Username:</label>
+            <input name="username" class="custom-field"/>
+        </li>
+        <li>
+            <label>Password:</label>
+            <input type="password" name="password" class="custom-field"/>
+        </li>
+    </fieldset>
+
+    <div id="widget-template-rss" class="rss">
+        <h2><a target="_new"></a></h2>
+        <div class="feed-items"></div>
+    </div>
+
+    <div id="rss-template-item">
+        <div class="rss-title">
+            <h3><a target="_new"></a></h3>
+        </div>
+        <div class="updated">
+            <p>
+            Updated: <span class="updated-text"></span>
+            </p>
+        </div>
+        <div class="description-text">
+        </div>
+    </div>
+
+    <!-- Bugz widget -->
+    <fieldset id="widget-settings-template-bugs">
+        <legend>[% terms.Bug %] list options</legend>
+        <li class="buglist-query-entry">
+            <label>Query string:</label>
+            <input name="query" type="text" class="custom-field" /><br />
+            <input name="editquery" type="button" value="Edit query" />
+        </li>
+        <li>
+            <label>Columns:</label><br/>
+            <ul class="buglist-column-select"></ul>
+        </li>
+    </fieldset>
+
+    <select id="buglist-sort-template">
+        <option value="-1">---</option>
+        <option value="0">Asc</option>
+        <option value="1">Desc</option>
+    </select>
+
+    [% Hook.process("widget-template") %]
+
+</div> <!-- /hide templates -->
+
+[% PROCESS global/footer.html.tmpl %]

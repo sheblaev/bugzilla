@@ -1,0 +1,257 @@
+[%# 1.0@bugzilla.org %]
+[%# The contents of this file are subject to the Mozilla Public
+  # License Version 1.1 (the "License"); you may not use this file
+  # except in compliance with the License. You may obtain a copy of
+  # the License at http://www.mozilla.org/MPL/
+
+  #
+  # Software distributed under the License is distributed on an "AS
+  # IS" basis, WITHOUT WARRANTY OF ANY KIND, either express or
+  # implied. See the License for the specific language governing
+  # rights and limitations under the License.
+  #
+  # The Original Code is the Bugzilla Bug Tracking System.
+  #
+  # The Initial Developer of the Original Code is Mozilla Corporation.
+  # Portions created by Mozilla are Copyright (C) 2008 Mozilla
+  # Corporation. All Rights Reserved.
+  #
+  # Contributor(s): Mark Smith <mark@mozilla.com>
+  #                 Reed Loden <reed@mozilla.com>
+  #%]
+
+[% PROCESS global/variables.none.tmpl %]
+
+[% inline_style = BLOCK %]
+#heading {
+  width:       98%;
+  font-size:   2em;
+  font-weight: bold;
+  margin:      12px;
+}
+.required:before {
+  content: "* ";
+  color: red;
+}
+.required_star {
+  color: red;
+}
+p {
+  max-width: 40%;
+}
+.row {
+  padding-bottom: 10px;
+}
+[% END %]
+
+[% inline_javascript = BLOCK %]
+$(document).ready(function() {
+  $('#crmForm').submit(function() {
+    $('#short_desc').val($('#short_desc').val() + ': ' + $('#program_name').val());
+  });
+  $('#new_program_request').change(function() {
+    if ($('#new_program_request').val() == 'Yes') {
+      $('.new_program_request_row').show();
+      $('.new_program_request_row').find('textarea').each(function() {
+        $(this).attr('required', true);
+      });
+    }
+    else {
+      $('.new_program_request_row').hide();
+      $('.new_program_request_row').find('textarea').each(function() {
+        $(this).removeAttr('required');
+      });
+    }
+  });
+});
+[% END %]
+
+[% PROCESS global/header.html.tmpl
+   title              = "CRM/Email Marketing Request"
+   generate_api_token = 1
+   style_urls         = [ "skins/standard/attachment.css",
+                          "js/jquery/plugins/datetimepicker/datetimepicker.css" ]
+   style              = inline_style
+   javascript         = inline_javascript
+   javascript_urls    = [ "js/field.js", "js/util.js" ]
+   jquery             = [ "datetimepicker" ]
+%]
+
+<div id="heading">CRM/Email Marketing Requests</div>
+<div>
+  <p>Mozilla continues to build our core, grow our influence, and prototype the
+    future. Making connections and cultivating relationships is critical to helping
+    people know our brands, programs and products, and take action with us.</p>
+
+  <p>Do you have <strong>C</strong>onstituents, <strong>C</strong>ontributors, or
+    <strong>C</strong>ustomers whose <strong>R</strong>elationships you want to help
+    nurture and manage?</p>
+
+  <p>Tell us more and then join our weekly meeting for next steps (we’ll send you
+    the invite details once you submit the [% terms.bug %]):</p>
+
+  <form method="post" action="post_bug.cgi" id="crmForm">
+    <input type="hidden" id="short_desc" name="short_desc" value="CRM/Email Marketing Request">
+    <input type="hidden" name="product" value="Marketing">
+    <input type="hidden" name="component" value="Email">
+    <input type="hidden" name="rep_platform" value="All">
+    <input type="hidden" name="op_sys" value="Other">
+    <input type="hidden" name="version" value="unspecified">
+    <input type="hidden" name="priority" value="--">
+    <input type="hidden" name="bug_severity" value="normal">
+    <input type="hidden" name="format" value="crm">
+    <input type="hidden" name="token" value="[% token FILTER html %]">
+    [% IF user.in_group('canconfirm') %]
+      <input type="hidden" name="bug_status" value="NEW">
+    [% END %]
+
+    <div class="row">
+      <div class="row_desc">
+        <label class="required" for="program_name">
+          <strong>Program Name:</strong>
+        </label>
+      </div>
+      <input type="text" required name="program_name" id="program_name" size="80">
+    </div>
+
+    <div class="row">
+      <div class="row_desc">
+        <label class="required" for="mozilla_team_dept">
+          <strong>Mozilla Team/Department</strong>
+        </label>
+      </div>
+      <input type="text" required name="mozilla_team_dept" id="mozilla_team_dept" size="80">
+    </div>
+
+    <div class="row">
+      <div class="row_desc">
+        <label class="required" for="relationship_development">
+          <strong>What kind of relationships are you looking to develop?</strong>
+        </label>
+      </div>
+      <textarea required name="relationship_development" id="business_need_elaborate" cols="80" rows="10"></textarea>
+    </div>
+
+    <div class="row">
+      <div class="row_desc">
+        <label class="required" for="relationship_goal">
+          <strong>How will you nurture these relationships?</strong>
+        </label>
+      </div>
+      <textarea required name="relationship_goal"  id="relationship_goal" cols="80" rows="10"
+                placeholder="communication strategy, topics, example actions"></textarea>
+    </div>
+
+     <div class="row">
+      <div class="row_desc">
+        <label class="required" for="new_program_request">
+          <strong>Is this a new program request?</strong>
+        </label>
+      </div>
+      <select required name="new_program_request" id="new_program_request">
+        <option value="">-- Select --</option>
+        <option value="Yes">Yes</option>
+        <option value="No">No</option>
+      </select>
+    </div>
+
+    [% WRAPPER program_request_row
+       name        = "way_to_solve"
+       placeholder = "If so, what are the steps that you take in order to complete the task today?" %]
+    Do you currently have a way to solve for this?
+    [% END %]
+
+    [% WRAPPER program_request_row
+       name = "pain_points" %]
+    What are the pain points in the current process?
+    [% END %]
+
+    [% WRAPPER program_request_row
+       name = "perceived_benefits" %]
+    What are the perceived benefits to changing the process?
+    [% END %]
+
+    [% WRAPPER program_request_row
+       name        = "data_size"
+       placeholder = "# of contacts, fields, etc." %]
+    How large is the data set?
+    [% END %]
+
+    [% WRAPPER program_request_row
+       name        = "how_many_train_people"
+       placeholder = "Who are they & what are their roles?" %]
+    How many people on your team need access or training?
+    [% END %]
+
+    <div class="row">
+      <div class="row_desc">
+        <label class="required" for="kpis">
+          <strong>How will success be measured?</strong>
+        </label>
+      </div>
+      <textarea required name="kpis" id="kpis" cols="80" rows="10" placeholder="KPIs"></textarea>
+    </div>
+
+    <div class="row">
+      <div class="row_desc">
+        <label class="required" for="risk">
+          <strong>What is the risk to not doing this?</strong>
+        </label>
+      </div>
+      <textarea required name="risk" id="risk" cols="80" rows="10"></textarea>
+    </div>
+
+    <div class="row">
+      <div class="row_desc">
+        <label class="required" for="timeline_for_launch">
+          <strong>What's the timeline for launch?</strong>
+        </label>
+      </div>
+      <textarea required name="timeline_for_launch" id="timeline_for_launch" cols="80" rows="10"></textarea>
+    </div>
+
+    <div class="row">
+      <div class="row_desc">
+        <label class="required" for="cf_due_date">
+          <strong>Who should be cc’d on this [% terms.bug %] and kept informed of updates?</strong>
+        </label>
+      </div>
+      [% INCLUDE global/userselect.html.tmpl
+         id       = "cc"
+         name     = "cc"
+         value    = cc
+         size     = 80
+         multiple = 5
+       %]
+    </div>
+
+    <div class="row">
+      <div class="row_desc">
+        <label for="other_info">
+          <strong>Any other info we should know?</strong>
+        </label>
+      </div>
+      <textarea name="other_info" id="other_info" cols="80" rows="10"
+                placeholder="links to campaign or program briefs"></textarea>
+    </div>
+
+    <input type="submit" id="commit" value="Submit Request">
+    <p>
+      [ <span class="required_star">*</span> <span class="required_explanation">Required Field</span> ]
+    </p>
+  </form>
+</div>
+
+[% PROCESS global/footer.html.tmpl %]
+
+[% BLOCK program_request_row %]
+  <div class="row new_program_request_row" style="display:none;">
+    <div class="row_desc">
+      <label for="[% name FILTER html %]" class="required">
+        <strong>[% content FILTER html %]</strong>
+      </label>
+    </div>
+    <textarea name="[% name FILTER html %]" id="[% name FILTER html %]"
+              cols="80" rows="10" placeholder="[% placeholder FILTER html %]"></textarea>
+  </div>
+[% END %]

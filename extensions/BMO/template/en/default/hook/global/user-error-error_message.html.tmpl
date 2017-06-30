@@ -1,0 +1,26 @@
+[%# This Source Code Form is subject to the terms of the Mozilla Public
+  # License, v. 2.0. If a copy of the MPL was not distributed with this
+  # file, You can obtain one at http://mozilla.org/MPL/2.0/.
+  #
+  # This Source Code Form is "Incompatible With Secondary Licenses", as
+  # defined by the Mozilla Public License, v. 2.0.
+  #%]
+
+[% IF error == 'illegal_change' || error == 'illegal_change_deps' %]
+  <p>
+    If you are attempting to confirm an unconfirmed [% terms.bug %] or edit the
+    fields of a [% terms.bug %], <a href="page.cgi?id=get_permissions.html">find
+    out how to get the necessary permissions</a>.
+  </p>
+[% END %]
+
+[% IF error == 'entry_access_denied' && product == 'Legal' %]
+  <p>
+    Unfortunately, we need to keep [% terms.bugs %] in the Legal product
+    restricted to employees, in order to preserve attorney-client privilege and
+    protect confidentiality.  Due to the way [% terms.Bugzilla %] works, this
+    means we can't let you file such [% terms.abug %] yourself. However, you
+    can contact Mozilla Legal through either legal-notices@mozilla.com or
+    trademarks@mozilla.com, as appropriate.
+  </p>
+[% END %]

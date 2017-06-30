@@ -1,0 +1,311 @@
+#overlay {
+    width: 100%;
+}
+
+#overlay-controls {
+    width: 100%;
+}
+
+#overlay-controls td {
+    width: 33%;
+}
+
+#overlay-controls #buttons {
+    text-align: center;
+}
+
+#overlay-controls #buttons > span {
+    display: inline-block;
+    white-space: nowrap;
+    margin: 0px 0.5em;
+}
+
+#overlay-top{
+    height: 20px;
+}
+
+#overlay-header .resize-guide {
+    background: url(images/sizer_mid.png) repeat-x;
+    height:16px;
+    position: relative;
+    content: "";
+}
+
+#overlay-header .resize-guide:after {
+    background: url(images/sizer_left.png) no-repeat;
+    height:16px;
+    width:16px;
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    content: "";
+}
+
+#overlay-header .resize-guide:before {
+    background: url(images/sizer_right.png) no-repeat;
+    height:16px;
+    width:16px;
+    position: absolute;
+    top: 0px;
+    right: 0px;
+    content: "";
+}
+
+#overlay-columns .overlay-column {
+    height: 200px;
+}
+
+.overlay-column {
+    border: 1px solid transparent;
+    vertical-align: top;
+}
+.overlay-column-hint {
+    border: 1px dotted gray;
+    border-radius: 5px;
+}
+
+#overlay-info .unsaved {
+    color: red;
+    display: none;
+}
+
+.overlay-entry .details {
+    display: none;
+}
+.overlay-entry .states {
+    font-size: small;
+}
+.overlay-entry .states span {
+    display: none;
+}
+.overlay-entry .owner {
+    font-size: small;
+    font-style: italic;
+}
+.overlay-entry .modified {
+    font-size: small;
+    font-style: italic;
+}
+.overlay-entry .name {
+    width: 80%;
+    text-align: left;
+}
+
+.loader {
+    background: url(images/ajax-loader.gif) repeat-x;
+}
+
+div.widget {
+    padding: 2px;
+}
+
+.widget-container {
+    padding: 1px;
+}
+
+.widget-resize-helper {
+    border: dashed 2px gray;
+}
+
+.widget-content {
+    overflow: auto;
+    margin: 0px;
+    padding 0px;
+    background: white;
+    color: #000;
+    height: 100%;
+    width: 100%;
+}
+
+.settings-dialog li {
+    list-style-type: none;
+}
+
+.settings-dialog label {
+    width: 100px;
+    float: left;
+}
+
+.widget-header {
+    white-space: nowrap;
+    overflow: hidden;
+    cursor: move;
+}
+
+.widget-title {
+    line-height: 1.5em;
+    float: left;
+}
+
+.widget-buttons {
+    float: right;
+}
+
+.widget-buttons button {
+    width: 1em;
+    height: 1em;
+    vertical-align: middle;
+}
+
+#buttons button {
+    width: 1.5em;
+    height: 1.5em;
+    vertical-align: bottom;
+}
+#buttons select {
+    height: 1.5em;
+    vertical-align: bottom;
+}
+
+.ui-icon.icon-newoverlay {
+    /* jQuery UI document */
+    background-position: -32px -96px;
+}
+.ui-icon.icon-saveoverlay {
+    /* jQuery UI disk */
+    background-position: -96px -112px;
+}
+.ui-icon.icon-saveoverlayas {
+    /* jQuery UI disk */
+    background-position: -96px -112px;
+}
+.ui-icon.icon-openoverlay {
+    /* jQuery UI folder open */
+    background-position: -16px -96px;
+}
+.ui-icon.icon-deleteoverlay {
+    /* jQuery UI trash */
+    background-position: -176px -96px;
+}
+.ui-icon.icon-publishoverlay {
+    /* jQuery UI check */
+    background-position: -64px -144px;
+}
+.ui-icon.icon-withholdoverlay {
+    /* jQuery UI circle-close */
+    background-position: -32px -192px;
+}
+.ui-icon.icon-overlaysettings {
+    /* jQuery UI wrench */
+    background-position: -176px -112px;
+}
+
+.ui-icon.icon-addwidget {
+    /* jQuery UI plus */
+    background-position: -16px -128px;
+}
+
+/* TODO: draw matching icons which describe better the column actions */
+.ui-icon.icon-addcolumn {
+    background-position: -208px -32px;
+}
+.ui-icon.icon-removecolumn {
+    background-position: -240px -32px;
+}
+.ui-icon.icon-resetcolumns {
+    background-position: -160px -32px;
+}
+
+.widget-header-maximized {
+    padding: 4px;
+    text-align: center;
+}
+.widget-max {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    z-index: 9990;
+    background: #fff;
+}
+
+.url-widget .widget-content {
+    overflow-y: hidden;
+}
+
+.widget_iframe {
+    border: 0;
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.widget .rss h1,
+.widget .rss h2,
+.widget .rss h3,
+.widget .rss p {
+    color: #000;
+}
+
+.widget .rss h2 a {
+    border: 1px solid #ccc;
+    display: block;
+    padding: 5px;
+}
+
+.widget .rss_title {
+    border-left: 1px solid #ccc;
+    border-right: 1px solid #ccc;
+    border-bottom: 1px dotted #ccc;
+    display: block;
+    padding: 5px;
+}
+
+.widget .rss div {
+    border-left: 1px solid #ccc;
+    border-right: 1px solid #ccc;
+    border-bottom: 1px solid #ccc;
+    display: block;
+    padding: 5px;
+}
+
+.widget .rss a.open_popup {
+    width: 15px;
+    height: 15px;
+    margin-left: 5px;
+    float: right;
+    background: url(images/icon_rss_popup.png) center left no-repeat;
+}
+
+.rss {
+    font-size: smaller;
+}
+
+.widget .rss a:hover.open_popup {
+    background: url(images/icon_rss_popup_b.png) center left no-repeat;
+}
+
+.widget .rss a.open_link {
+    width: 15px;
+    height: 15px;
+    margin-left: 5px;
+    float: right;
+    background: url(images/icon_rss_link.png) center left no-repeat;
+}
+
+.widget .rss a:hover.open_link {
+    background: url(images/icon_rss_link_b.png) center left no-repeat;
+}
+
+.widget table.buglist {
+    width: 100%;
+}
+.widget table.buglist th .ui-icon {
+    float: right;
+}
+.widget table.buglist th {
+    white-space: nowrap;
+}
+.widget table.buglist td {
+    border: dotted 1px;
+}
+
+.settings-dialog .buglist-column-select select {
+    right: 0px;
+    position: absolute;
+    margin-right: 10%;
+}

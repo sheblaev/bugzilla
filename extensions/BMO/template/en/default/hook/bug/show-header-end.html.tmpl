@@ -1,0 +1,30 @@
+[%# This Source Code Form is subject to the terms of the Mozilla Public
+  # License, v. 2.0. If a copy of the MPL was not distributed with this
+  # file, You can obtain one at http://mozilla.org/MPL/2.0/.
+  #
+  # This Source Code Form is "Incompatible With Secondary Licenses", as
+  # defined by the Mozilla Public License, v. 2.0.
+  #%]
+
+[% style_urls.push('extensions/BMO/web/styles/edit_bug.css') %]
+[% javascript_urls.push('extensions/BMO/web/js/edit_bug.js') %]
+[% IF user.in_group('bounty-team') %]
+  [% javascript_urls.push('extensions/BMO/web/js/attachment_bounty_form.js') %]
+  [% yui.push('selector') %]
+[% END %]
+[% title = "$bug.bug_id &ndash; " %]
+[% IF bug.alias != '' %]
+  [% filtered_alias = bug.alias FILTER html %]
+  [% title = title _ "($filtered_alias) " %]
+[% END %]
+[% title = title _ filtered_desc %]
+[% javascript = javascript _ 
+                "document.title = document.title.replace(/^" _ terms.Bug _ " /, '');"
+%]
+[% js_bug_id = bug.bug_id FILTER js %]
+[% IF user.in_group("bounty-team") %]
+  [% javascript = javascript _
+                  "YAHOO.util.Event.onDOMReady(function () { " _
+                  "add_bounty_attachment('$js_bug_id'); });"
+  %]
+[% END %]

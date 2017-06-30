@@ -1,0 +1,20 @@
+[%#
+  # This Source Code Form is subject to the terms of the Mozilla Public
+  # License, v. 2.0. If a copy of the MPL was not distributed with this
+  # file, You can obtain one at http://mozilla.org/MPL/2.0/.
+  #
+  # The Initial Developer of the Original Code is "Nokia Corporation"
+  # Portions created by the Initial Developer are Copyright (C) 2010 the
+  # Initial Developer. All Rights Reserved.
+  #
+  # Contributor(s):
+  #   Jari Savolainen <ext-jari.a.savolainen@nokia.com>
+  #%]
+[%
+    title = "Dashboard"
+    desc = "Dashboard extension"
+%]
+[% param_descs = {} %]
+[% FOREACH param IN panel.param_list %]
+    [% param_descs.${param.name} = param.desc %]
+[% END %]

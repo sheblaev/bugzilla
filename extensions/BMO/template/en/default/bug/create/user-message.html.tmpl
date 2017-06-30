@@ -1,0 +1,51 @@
+[%# This Source Code Form is subject to the terms of the Mozilla Public
+  # License, v. 2.0. If a copy of the MPL was not distributed with this
+  # file, You can obtain one at http://mozilla.org/MPL/2.0/.
+  #
+  # This Source Code Form is "Incompatible With Secondary Licenses", as
+  # defined by the Mozilla Public License, v. 2.0.
+  #%]
+
+[% PROCESS global/variables.none.tmpl %]
+
+<p>
+  [% UNLESS cloned_bug_id || no_guided_bug_link %]
+    Consider using the
+    <a href="enter_bug.cgi?product=[% product.name FILTER html %]&amp;format=guided"
+    ><img src="extensions/BMO/web/images/guided.png" width="16" height="16" align="absmiddle" border="0">
+    [%+ terms.Bugzilla %] Helper</a> instead of this form.
+  [% END +%]
+  [% UNLESS no_bug_guidelines %]
+    Before reporting a [% terms.bug %], make sure you've read our
+    <a href="https://developer.mozilla.org/en/Bug_writing_guidelines">
+    [% terms.bug %] writing guidelines</a> and double checked that your [% terms.bug %] hasn't already
+    been reported. Consult our list of <a href="https://bugzilla.mozilla.org/duplicates.cgi">
+    most frequently reported [% terms.bugs %]</a> and <a href="https://bugzilla.mozilla.org/query.cgi">
+    search through descriptions</a> of previously reported [% terms.bugs %].
+  [% END %]
+</p>
+
+[%
+  PROCESS bug/create/custom_forms.none.tmpl;
+  visible_forms = [];
+  FOREACH form = custom_forms.${product.name};
+    NEXT IF form.hide;
+    NEXT IF form.group && !user.in_group(form.group);
+    visible_forms.push(form);
+  END;
+  RETURN UNLESS visible_forms.size;
+%]
+
+<div id="custom_form_list">
+  <img src="extensions/BMO/web/images/notice.png" width="48" height="48" id="custom_form_list_image">
+  <div id="custom_form_list_text">
+    This product has task-specific [% terms.bug %] forms that should be used if
+    appropriate:
+
+    <ul>
+      [% FOREACH form = visible_forms.sort("title") %]
+        <li><a href="[% form.link FILTER none %]">[% form.title FILTER html %]</a></li>
+      [% END %]
+    </ul>
+  </div>
+</div>

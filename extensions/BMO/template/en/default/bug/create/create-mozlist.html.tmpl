@@ -1,0 +1,177 @@
+[%# This Source Code Form is subject to the terms of the Mozilla Public
+  # License, v. 2.0. If a copy of the MPL was not distributed with this
+  # file, You can obtain one at http://mozilla.org/MPL/2.0/.
+  #
+  # This Source Code Form is "Incompatible With Secondary Licenses", as
+  # defined by the Mozilla Public License, v. 2.0.
+  #%]
+
+[% PROCESS global/variables.none.tmpl %]
+
+[% PROCESS global/header.html.tmpl
+   title = "Mozilla Discussion Forum"
+   generate_api_token = 1
+   javascript_urls = [ 'extensions/BMO/web/js/form_validate.js',
+                       'js/field.js' ]
+   style = ".mandatory{color:red;font-size:80%;}"
+%]
+
+<script type="text/javascript">
+<!--
+    function trySubmit() {
+        var alert_text = "";
+
+        if (!isFilledOut('listName')) {
+            alert_text += "Please enter the list name\n";
+        }
+
+        if (!isValidEmail(document.getElementById('listAdmin').value)) {
+            alert_text += "Please enter a valid email address for the list administrator\n";
+        }
+
+        if (alert_text) {
+            alert(alert_text);
+            return false;
+        }
+
+        var listName = document.getElementById('listName').value;
+        document.getElementById('short_desc').value = "Discussion Forum: " + listName;
+
+        return true;
+    }
+// -->
+</script>
+
+<p>
+  <b>Create a Mozilla Discussion Forum</b><br>
+  This option gives you a Mozilla <a
+  href="https://www.mozilla.org/about/forums/">Discussion Forum</a>.
+  These are the normal mechanism for public discussion in the Mozilla
+  project. They are made up of a mailing list on
+  <b>lists.mozilla.org</b>, a newsgroup on <b>news.mozilla.org</b> and
+  a <b>Google Group</b> (which maintains the list archives), all linked
+  together.  Users can add and remove themselves.
+</p>
+
+<div id="message">
+  <b>Note:</b>
+  You must use <a href="https://mozilla.service-now.com/"><b>Service Now</b></a> 
+  to request a distribution list or a standard mailing list.
+</div>
+<br>
+
+<form method="post" action="post_bug.cgi" id="mozListRequestForm"
+      enctype="multipart/form-data" onSubmit="return trySubmit();">
+  <input type="hidden" id="format" name="format" value="mozlist">
+  <input type="hidden" id="product" name="product" value="mozilla.org">
+  <input type="hidden" id="rep_platform" name="rep_platform" value="All">
+  <input type="hidden" id="op_sys" name="op_sys" value="Other">
+  <input type="hidden" id="priority" name="priority" value="--">
+  <input type="hidden" id="version" name="version" value="other">
+  <input type="hidden" id="short_desc" name="short_desc" value="">
+  <input type="hidden" id="component" name="component" value="Discussion Forums">
+  <input type="hidden" id="bug_severity" name="bug_severity" value="normal">
+  <input type="hidden" id="token" name="token" value="[% token FILTER html %]">
+
+  <table>
+  <tr>
+    <th class="field_label">
+      <span class="mandatory" title="Required">*</span> List Name:
+    </th>
+    <td>
+      The desired name for the newsgroup. Should start with 'mozilla.' and fit somewhere 
+      in the hierarchy described <a href="https://www.mozilla.org/about/forums/">here</a>.<br>
+      <input name="listName" id="listName" size="60" value="[% listName FILTER html %]">
+    </td>
+  </tr>
+  <tr>
+    <th class="field_label">
+     <span class="mandatory" title="Required">*</span> List Administrator:
+    </th>
+    <td>
+       <b>Note:</b>The list administrator is also initially considered to be the list moderator
+       and will be responsible for moderation tasks unless delegated to someone else.  For
+       convenience, [% terms.Bugzilla %] user accounts will autocomplete but it does not have
+       to be a [% terms.Bugzilla %] account.<br>
+      [% INCLUDE global/userselect.html.tmpl
+         id       => "listAdmin"
+         name     => "listAdmin"
+         value    => ""
+         size     => 60
+         multiple => 5
+       %]
+    </td>
+  </tr>
+  <tr>
+    <td class="field_label">Short Description:</th>
+    <td>
+      This will be shown to users on the index of lists on the server.<br>
+      <input name="listShortDesc" id="listShortDesc" size="60" value="[% listShortDesc FILTER html %]">
+    </td>
+  </tr>
+  <tr>
+    <td class="field_label">Long Description:</th>
+    <td>
+      This will be shown at the top of the list's listinfo page.<br>
+      [% INCLUDE global/textarea.html.tmpl
+         name           = 'listLongDesc'
+         id             = 'listLongDesc'
+         minrows        = 10
+         maxrows        = 25
+         cols           = constants.COMMENT_COLS
+         defaultcontent = listLongDesc
+       %]
+    </td>
+  </tr>
+  <tr>
+    <th class="field_label">Additional Comments:</th>
+    <td>
+      Justification for the list, special instructions, etc.<br>
+      [% INCLUDE global/textarea.html.tmpl
+         name           = 'comment'
+         id             = 'comment'
+         minrows        = 10
+         maxrows        = 25
+         cols           = constants.COMMENT_COLS
+         defaultcontent = comment
+       %]
+    </td>
+  </tr>
+  <tr>
+    <th class="field_label">CC:</th>
+    <td>
+      [% INCLUDE global/userselect.html.tmpl
+         id => "cc"
+         name => "cc"
+         value => cc
+         size => 60
+         multiple => 5
+       %]
+    </td>
+  </tr>
+  <tr>
+    <th class="field_label">URL:</th>
+    <td colspan="3">
+      <input name="bug_file_loc" size="60"
+             value="[% bug_file_loc FILTER html %]">
+    </td>
+  </tr>
+  <tr>
+    <td align="right">
+      <input type="checkbox" name="groups" id="group_35" value="infra">
+    </td>
+    <td>
+      <label for="group_35"><b>This is an internal issue which should not be publicly visible.</b></label>
+    </td>
+  </tr>
+  </table>
+
+  <input type="submit" id="commit" value="Submit Request">
+
+  <p>
+    Thanks for contacting us. You will be notified by email of any progress made
+    in resolving your request.
+  </p>
+</form>
+
+[% PROCESS global/footer.html.tmpl %]

@@ -1,0 +1,104 @@
+[%# This Source Code Form is subject to the terms of the Mozilla Public
+  # License, v. 2.0. If a copy of the MPL was not distributed with this
+  # file, You can obtain one at http://mozilla.org/MPL/2.0/.
+  #
+  # This Source Code Form is "Incompatible With Secondary Licenses", as
+  # defined by the Mozilla Public License, v. 2.0.
+  #%]
+
+[%
+  IF field.name == 'cf_rank';
+    field.hidden = 1;
+    RETURN;
+  END;
+%]
+
+[%
+  IF field.name == 'cf_crash_signature';
+    field.hidden = 1;
+    value = bug.cf_crash_signature;
+%]
+  [%# lifted from bug/field.html.tmpl %]
+  <tr>
+    [% PROCESS "bug/field-label.html.tmpl" %]
+    <td class="field_value" id="field_container_[% field.name FILTER html %]" colspan="2">
+      <div id="[% field.name FILTER html %]_edit_container" class="bz_default_hidden">
+        <div>
+          (<a href="#" id="[% field.name FILTER html %]_edit_action">edit</a>)
+        </div>
+        [% IF split_cf_crash_signature.size %]
+          [% FOREACH sig = split_cf_crash_signature %]
+            [% IF sig.match('^\[\@\s*') && sig.match('\s*\]$') %]
+              [% sig = sig.replace('(^\[\@\s*|\s*\]$)', '') %]
+              <a href="https://crash-stats.mozilla.com/signature/?signature=[% sig FILTER uri %]"
+               target="_blank">[@ [% sig FILTER html %] ]</a><br>
+            [% ELSE %]
+              [% sig FILTER html %]<br>
+            [% END %]
+          [% END %]
+        [% ELSIF value %]
+          <pre class="field_textarea_readonly">[% value FILTER html %]</pre>
+        [% END %]
+      </div>
+      <div id="[% field.name FILTER html %]_input">
+        [% INCLUDE global/textarea.html.tmpl
+            id = field.name name = field.name minrows = 4 maxrows = 8
+            cols = 60 defaultcontent = value %]
+      </div>
+      <script type="text/javascript">
+        hideEditableField('[% field.name FILTER js %]_edit_container',
+                          '[% field.name FILTER js %]_input',
+                          '[% field.name FILTER js %]_edit_action',
+                          '[% field.name FILTER js %]',
+                          '[% value FILTER js %]',
+                          '',
+                          true);
+      </script>
+    </td>
+  </tr>
+[%
+    RETURN;
+  END;
+%]
+
+[%
+  IF field.name == 'cf_cab_review' AND bug.cf_cab_review == '---';
+    field.hidden = 1;
+    value = '---';
+%]
+  [%# lifted from bug/field.html.tmpl %]
+  <tr>
+    [% PROCESS "bug/field-label.html.tmpl" hidden=0 %]
+    <td class="field_value" id="field_container_[% field.name FILTER html %]" colspan="2">
+      <span id="cab-review-gate">
+        <a href="https://mozilla.service-now.com/change_request.do?sysparm_stack=change_request_list.do&amp;sys_id=-1&amp;sysparm_query=active=true" target="_blank">ServiceNow Change Request</a>
+        (<a href="#" id="cab-review-gate-close">use flag</a>)
+      </span>
+      <span id="cab-review-edit" style="display:none">
+        <input type="hidden" id="[% field.name FILTER html %]_dirty">
+        <select id="[% field.name FILTER html %]" name="[% field.name FILTER html %]">
+          [%
+            FOREACH legal_value = field.legal_values;
+              NEXT IF NOT legal_value.is_active AND NOT value.contains(legal_value.name).size;
+              NEXT UNLESS bug.check_can_change_field(field.name, '---', legal_value.name)
+                OR value.contains(legal_value.name).size;
+              %]
+              <option value="[% legal_value.name FILTER html %]"
+                      id="v[% legal_value.id FILTER html %]_[% field.name FILTER html %]"
+                      [% IF value.contains(legal_value.name).size %]
+                        selected
+                      [% ELSIF bug AND !legal_value.is_visible_on_bug(bug) %]
+                        class="bz_hidden_option" disabled
+                      [% END %]
+              >[% display_value(field.name, legal_value.name) FILTER html %]</option>
+          [%
+            END;
+          %]
+        </select>
+      </span>
+    </td>
+  </tr>
+[%
+    RETURN;
+  END;
+%]

@@ -1,0 +1,683 @@
+[%# This Source Code Form is subject to the terms of the Mozilla Public
+  # License, v. 2.0. If a copy of the MPL was not distributed with this
+  # file, You can obtain one at http://mozilla.org/MPL/2.0/.
+  #
+  # This Source Code Form is "Incompatible With Secondary Licenses", as
+  # defined by the Mozilla Public License, v. 2.0.
+  #%]
+
+[% PROCESS global/variables.none.tmpl %]
+
+[% inline_style = BLOCK %]
+#pr_form {
+  padding: 10px;
+  width: 600px;
+}
+
+#pr_form input[type="text"], #pr_form textarea {
+  width: 100%;
+  margin-bottom: 2px;
+}
+
+#pr_form .calendar {
+  width: 100px;
+}
+
+#pr_form .user {
+  width: 300px;
+}
+
+#pr_form select {
+  width: 200px;
+}
+
+#pr_form .required:after {
+  content: " *";
+  color: red;
+}
+
+#pr_form .missing {
+  box-shadow: 0px 0px 5px red;
+}
+
+#pr_form label {
+  font-weight: bold;
+  display: block;
+}
+
+#pr_form label.normal {
+  font-weight: normal;
+  display: inline;
+}
+
+#pr_form .calendar_button {
+  margin-top: 0.5em;
+}
+
+#pr_form .desc {
+  padding-bottom: 3px;
+}
+
+#pr_form .field {
+  margin-bottom: 10px;
+}
+
+#pr_form .indent {
+  margin-left: 30px;
+}
+
+#pr_form textarea {
+  font-family: inherit;
+  font-size: inherit;
+}
+
+#pr_form .head {
+  font-weight: bold;
+  border-top: 1px solid silver;
+  border-bottom: 1px solid silver;
+  padding: 5px;
+  margin: 1em 0;
+  background: #ddd;
+}
+
+#pr_form fieldset {
+  border: none;
+}
+
+#pr_form .extra {
+  font-style: italic;
+}
+
+#pr_form .extra a {
+  text-decoration: underline;
+}
+
+#pr_form #commit {
+  margin-top: 20px;
+}
+
+#pr_form .linked {
+  display: block;
+  margin-top: 2px;
+  width: 300px;
+}
+
+[% END %]
+
+[% inline_javascript = BLOCK %]
+var pr_inited = false;
+
+function init_listener(id, event, fn) {
+  YAHOO.util.Event.addListener(id, event, fn);
+  bz_fireEvent(document.getElementById(id), event);
+}
+
+function toggle_linked(id, value, suffix) {
+  var el = document.getElementById(id);
+  var show = el.type == 'checkbox' ? el.checked : el.value == value;
+  if (show) {
+    var linked = document.getElementById(id + suffix);
+    YAHOO.util.Dom.addClass(linked, 'linked');
+    YAHOO.util.Dom.removeClass(linked, 'bz_default_hidden');
+    if (pr_inited && linked.nodeName == "INPUT") {
+      linked.focus();
+      linked.select();
+    }
+  }
+  else {
+    YAHOO.util.Dom.addClass(id + suffix, 'bz_default_hidden');
+  }
+}
+
+function init_other(id) {
+  init_listener(id, 'change', function(o) {
+    toggle_linked(id, 'Other:', '_other');
+  });
+}
+
+YAHOO.util.Event.onDOMReady(function() {
+  init_listener('metrica', 'change', function(o) {
+    toggle_linked('metrica', 'Yes', '_extra');
+  });
+  init_listener('budget', 'change', function(o) {
+    toggle_linked('budget', 'Extra', '_extra');
+  });
+  init_listener('proj_mat_online', 'click', function(o) {
+    toggle_linked('proj_mat_online', 0, '_extra');
+  });
+  init_listener('proj_mat_file', 'click', function(o) {
+    toggle_linked('proj_mat_file', 0, '_extra');
+  });
+  init_listener('pr_mat_online', 'click', function(o) {
+    toggle_linked('pr_mat_online', 0, '_extra');
+  });
+  init_listener('pr_mat_file', 'click', function(o) {
+    toggle_linked('pr_mat_file', 0, '_extra');
+  });
+
+  init_other('pr_owner');
+  init_other('group_focus');
+  init_other('project_type');
+  init_other('region');
+  init_other('press_center');
+  init_other('internal_resources');
+  init_other('external_resources');
+  init_other('localization');
+  init_other('audience');
+
+  pr_inited = true;
+});
+
+function validate_other(id, value, suffix) {
+  var el = document.getElementById(id);
+  if (!value) value = 'Other:';
+  if (!suffix) suffix = '_other';
+  if (!el) {
+    console.error('Failed to find element: ' + elem_id);
+    return false;
+  }
+  if (el.type == 'checkbox') {
+    if (!el.checked) return true;
+  }
+  else if (el.value != value) {
+    return true;
+  }
+  return isFilledOut(id + suffix);
+}
+
+function validate_form() {
+  var Dom = YAHOO.util.Dom;
+
+  var old_missing = Dom.getElementsByClassName('missing');
+  for (var i = 0, il = old_missing.length; i < il; i++) {
+    Dom.removeClass(old_missing[i], 'missing');
+  }
+
+  var missing = [];
+  if (!isFilledOut('short_desc'))     missing.push(['short_desc', 'Project Title']);
+  if (!isFilledOut('desc'))           missing.push(['desc', 'Project Description and Scope']);
+
+  if (!isFilledOut('start_date'))     missing.push(['start_date', 'Start Date']);
+  if (!isFilledOut('announce_date'))  missing.push(['announce_date', 'Announcement Date']);
+  if (!isFilledOut('cf_due_date'))    missing.push(['cf_due_date', 'Internal Deadline']);
+
+  if (!isFilledOut('pr_owner'))       missing.push(['pr_owner', 'Project PR Owner']);
+  if (!isFilledOut('owner'))          missing.push(['owner', 'Project Owner']);
+
+  if (!isFilledOut('rasci_a'))        missing.push(['rasci_a', 'RASCI Approver']);
+
+  if (!isFilledOut('tier'))           missing.push(['tier', 'Tier']);
+  if (!isFilledOut('project_type'))   missing.push(['project_type', 'Project Type']);
+  if (!isFilledOut('pr_approach'))    missing.push(['pr_approach', 'PR Approach']);
+  if (!isFilledOut('group_focus'))    missing.push(['group_focus', 'Product Group Focus']);
+  if (!validate_other('group_focus')) missing.push(['group_focus', 'Product Group Focus - Other']);
+  if (!isFilledOut('region'))         missing.push(['region', 'Region']);
+  if (!validate_other('region'))      missing.push(['region', 'Region - Other']);
+
+  if (!isFilledOut('project_goals'))  missing.push(['project_goals', 'Project Goals']);
+  if (!isFilledOut('pr_goals'))       missing.push(['pr_goals', 'PR Goals']);
+  if (!isFilledOut('company_goal'))   missing.push(['company_goal', 'Company Goal']);
+  if (!isOneChecked(document.forms.pr_form.audience))
+    missing.push(['audience_group', 'Audiences']);
+  if (!validate_other('audience'))    missing.push(['audience', 'Audience - Other']);
+  if (!isFilledOut('key_messages'))   missing.push(['key_messages', 'Key Messages']);
+
+  if (Dom.get('proj_mat_online').checked) {
+    if (!isFilledOut('proj_mat_online_desc')) missing.push(['proj_mat_online_desc', 'Project Materials - Online Description']);
+    if (!isFilledOut('proj_mat_online_link')) missing.push(['proj_mat_online_link', 'Project Materials - Online Link']);
+  }
+  if (Dom.get('proj_mat_file').checked) {
+    if (!isFilledOut('proj_mat_file_desc'))   missing.push(['proj_mat_file_desc', 'Project Materials - Upload Description']);
+    if (!isFilledOut('proj_mat_file_attach')) missing.push(['proj_mat_file_attach', 'Project Materials - Upload File']);
+  }
+  if (Dom.get('pr_mat_online').checked) {
+    if (!isFilledOut('pr_mat_online_desc')) missing.push(['pr_mat_online_desc', 'PR Project Materials - Online Description']);
+    if (!isFilledOut('pr_mat_online_link')) missing.push(['pr_mat_online_link', 'PR Project Materials - Online Link']);
+  }
+  if (Dom.get('pr_mat_file').checked) {
+    if (!isFilledOut('pr_mat_file_desc'))   missing.push(['pr_mat_file_desc', 'PR Project Materials - Upload Description']);
+    if (!isFilledOut('pr_mat_file_attach')) missing.push(['pr_mat_file_attach', 'PR Project Materials - Upload File']);
+  }
+
+  if (!validate_other('press_center'))        missing.push(['press_center', 'Press Center Update - Other']);
+  if (!validate_other('internal_resources'))  missing.push(['internal_resources', 'Internal Resources Needed - Other']);
+  if (!validate_other('external_resources'))  missing.push(['external_resources', 'External Resources Needed - Other']);
+  if (!validate_other('localization'))        missing.push(['localization', 'Localization Needed - Other']);
+
+  if (!isFilledOut('budget'))                       missing.push(['budget', 'Budget']);
+  if (!validate_other('budget', 'Extra', '_extra')) missing.push(['budget', 'Budget - Extra']);
+
+  if (missing.length) {
+    var missing_text = [];
+    for (var i = 0, il = missing.length; i < il; i++) {
+      Dom.addClass(missing[i][0], 'missing');
+      missing_text.push(missing[i][1]);
+    }
+    if (missing_text.length == 1) {
+      alert("The field '" + missing_text[0] + "' is required.");
+    }
+    else {
+      alert("The following fields are required:\n- " + missing_text.join("\n- "));
+    }
+    return false;
+  }
+
+  return true;
+}
+
+[% END %]
+
+[% PROCESS global/header.html.tmpl
+   title = "PR Project Form"
+   generate_api_token = 1
+   style = inline_style
+   javascript = inline_javascript
+   javascript_urls = [ 'extensions/BMO/web/js/form_validate.js',
+                       'js/field.js', 'js/util.js' ]
+%]
+
+[% UNLESS user.in_group('pr-private') %]
+  <div id="error_msg" class="throw_error">
+    This form is only available to members of the Mozilla PR team.
+  </div>
+  [% PROCESS global/footer.html.tmpl %]
+  [% RETURN %]
+[% END %]
+
+[% USE Bugzilla %]
+[% cgi = Bugzilla.cgi %]
+
+<form id="pr_form" name="pr_form" method="post" action="post_bug.cgi"
+      enctype="multipart/form-data" onSubmit="return validate_form()">
+<input type="hidden" name="format" value="mozpr">
+<input type="hidden" name="product" value="Mozilla PR">
+<input type="hidden" name="component" value="Projects">
+<input type="hidden" name="rep_platform" value="All">
+<input type="hidden" name="op_sys" value="Other">
+<input type="hidden" name="version" value="unspecified">
+<input type="hidden" name="bug_severity" value="normal">
+<input type="hidden" name="group" value="pr-private">
+<input type="hidden" name="assigned_to" id="assigned_to" value="nobody@mozilla.org">
+<input type="hidden" name="token" value="[% token FILTER html %]">
+
+<div class="head">
+  PR Project Form
+</div>
+
+<div class="field">
+  <label for="short_desc" class="required">Project Title</label>
+  <input type="text" name="short_desc" id="short_desc" placeholder="Your project's title">
+</div>
+
+<div class="field">
+  <label for="desc" class="required">Project Description and Scope</label>
+  <textarea name="desc" id="desc" placeholder="A short description of your PR project"></textarea>
+</div>
+
+<div class="head">
+  Timings
+</div>
+
+<div class="field">
+  <label for="start_date" class="required">Start Date</label>
+  <input name="start_date" id="start_date" value="" class="calendar"
+    onchange="updateCalendarFromField(this)">
+  <button type="button" class="calendar_button" id="button_calendar_start_date"
+    onclick="showCalendar('start_date')">
+    <span>Calendar</span>
+  </button>
+  <div id="con_calendar_start_date"></div>
+  <script type="text/javascript">
+    createCalendar('start_date')
+  </script>
+</div>
+
+<div class="field">
+  <label for="announce_date" class="required">Announcement Date</label>
+  <input name="announce_date" id="announce_date" value="" class="calendar"
+    onchange="updateCalendarFromField(this)">
+  <button type="button" class="calendar_button" id="button_calendar_announce_date"
+    onclick="showCalendar('announce_date')">
+    <span>Calendar</span>
+  </button>
+  <div id="con_calendar_announce_date"></div>
+  <script type="text/javascript">
+    createCalendar('announce_date')
+  </script>
+</div>
+
+<div class="field">
+  <label for="cf_due_date" class="required">Internal Deadline</label>
+  <input name="cf_due_date" id="cf_due_date" value="" class="calendar"
+    onchange="updateCalendarFromField(this)">
+  <button type="button" class="calendar_button" id="button_calendar_cf_due_date"
+    onclick="showCalendar('cf_due_date')">
+    <span>Calendar</span>
+  </button>
+  <div id="con_calendar_cf_due_date"></div>
+  <script type="text/javascript">
+    createCalendar('cf_due_date')
+  </script>
+</div>
+
+<div class="head">
+  Owners
+</div>
+
+<div class="field">
+  <label for="pr_owner" class="required">Project PR Owner</label>
+  <select name="pr_owner" id="pr_owner">
+    <option value=""></option>
+    <option value="ahubert@mozilla.com">Aurelien Hubert</option>
+    <option value="bhueppe@mozilla.com">Barbara Hüppe</option>
+    <option value="ej@mozilla.com">Erica Jostedt</option>
+    <option value="jokelly@mozilla.com">Justin O'Kelly</option>
+    <option value="kshaw@mozilla.com">Karolina Shaw</option>
+    <option value="kshaw@mozilla.com">Mike Manning</option>
+    <option value="lnapoli@mozilla.com">Laura Napoli</option>
+    <option value="pjarratt@mozilla.com">Paul Jarratt</option>
+    <option value="tnitot@mozilla.com">Tristan Nitot</option>
+    <option value="vponell@mozilla.com">Valerie Ponell</option>
+    <option value="Other:">Other:</option>
+  </select>
+  <input name="pr_owner_other" id="pr_owner_other" class="bz_default_hidden">
+</div>
+
+<div class="field">
+  <label for="owner" class="required">Project Owner</label>
+  <input name="owner" id="owner" class="user">
+</div>
+
+<div class="head">
+  RASCI
+</div>
+
+<div class="field">
+  <label for="rasci_r">Responsible</label>
+  <input name="rasci_r" id="rasci_r" class="user">
+</div>
+
+<div class="field">
+  <label for="rasci_a" class="required">Approver</label>
+  <input name="rasci_a" id="rasci_a" class="user">
+</div>
+
+<div class="field">
+  <label for="rasci_s">Supporter</label>
+  <input name="rasci_s" id="rasci_s" class="user">
+</div>
+
+<div class="field">
+  <label for="rasci_c">Consultant</label>
+  <input name="rasci_c" id="rasci_c" class="user">
+</div>
+
+<div class="field">
+  <label for="rasci_i">Informed</label>
+  <input name="rasci_i" id="rasci_i" class="user">
+</div>
+
+<div class="head">
+  Details
+</div>
+
+<div class="field">
+  <label for="tier" class="required">Tier</label>
+  <select name="tier" id="tier">
+    <option value=""></option>
+    <option value="1">1</option>
+    <option value="2">2</option>
+    <option value="3">3</option>
+  </select>
+</div>
+
+<div class="field">
+  <label for="project_type" class="required">Project Type</label>
+  <select name="project_type" id="project_type">
+    <option value=""></option>
+    <option>Announcement</option>
+    <option>Speaking and Events</option>
+    <option>Planning</option>
+    <option>Messaging and Materials</option>
+    <option>Campaign</option>
+    <option>Other:</option>
+  </select>
+  <input name="project_type_other" id="project_type_other" class="bz_default_hidden">
+</div>
+
+<div class="field">
+  <label for="pr_approach" class="required">PR Approach</label>
+  <select name="pr_approach" id="pr_approach">
+    <option value=""></option>
+    <option value="Proactive">Proactive</option>
+    <option value="Reactive">Reactive</option>
+  </select>
+</div>
+
+<div class="field">
+  <label for="group_focus" class="required">Product Group Focus</label>
+  <select name="group_focus" id="group_focus">
+    <option value=""></option>
+    <option>Firefox Desktop</option>
+    <option>Firefox for Android</option>
+    <option>Marketplace</option>
+    <option>Developer Tools</option>
+    <option>Cloud</option>
+    <option>Firefox OS</option>
+    <option>Corporate / Business Support</option>
+    <option>Other:</option>
+  </select>
+  <input name="group_focus_other" id="group_focus_other" class="bz_default_hidden">
+</div>
+
+<div class="field">
+  <label for="region" class="required">Region</label>
+  <select name="region" id="region">
+    <option value=""></option>
+    <option>Global</option>
+    <option>US</option>
+    <option>LatAm</option>
+    <option>Europe</option>
+    <option>Africa</option>
+    <option>Asia</option>
+    <option>Other:</option>
+  </select>
+  <input name="region_other" id="region_other" class="bz_default_hidden">
+</div>
+
+<div class="head">
+  Goals, Audience, and Messages
+</div>
+
+<div class="field">
+  <label for="project_goals" class="required">Project Goals</label>
+  <textarea name="project_goals" id="project_goals"></textarea>
+</div>
+
+<div class="field">
+  <label for="pr_goals" class="required">PR Goals</label>
+  <textarea name="pr_goals" id="pr_goals"></textarea>
+</div>
+
+<div class="field">
+  <label for="company_goal" class="required">Company Goal</label>
+  <select name="company_goal" id="company_goal">
+    <option value=""></option>
+    <option>Scale Firefox OS</option>
+    <option>Add Services to our Product Lines</option>
+    <option>Get Firefox on a Growth Trajectory</option>
+    <option>Invest in Sustainability</option>
+    <option>Risk Mitigation</option>
+  </select>
+</div>
+
+<div class="field" id="audience_group">
+  <label class="required">Audiences</label>
+  <input type="checkbox" name="audience" id="audience_business" value="Business Press">
+  <label for="audience_business" class="normal">Business Press</label><br>
+  <input type="checkbox" name="audience" id="audience_con_tech" value="Consumer Tech">
+  <label for="audience_con_tech" class="normal">Consumer Tech</label><br>
+  <input type="checkbox" name="audience" id="audience_con" value="Consumer">
+  <label for="audience_con" class="normal">Consumer</label><br>
+  <input type="checkbox" name="audience" id="audience_dev" value="Developer">
+  <label for="audience_dev" class="normal">Developer</label><br>
+  <input type="checkbox" name="audience" id="audience" value="Other:">
+  <label for="audience" class="normal">Other:</label><br>
+  <input name="audience_other" id="audience_other" class="bz_default_hidden indent">
+</div>
+
+<div class="field">
+  <label for="key_messages" class="required">Key Messages</label>
+  <textarea name="key_messages" id="key_messages" placeholder="State (draft) key messages of what we would like to get across to
+  press for this project."></textarea>
+</div>
+
+<div class="head">
+  Materials
+</div>
+
+<div class="field">
+  <label>Project Materials</label>
+  <div>
+    <input type="checkbox" name="proj_mat_online" id="proj_mat_online">
+    <label class="normal" for="proj_mat_online">
+      Online Documentation (e.g. WAVE Dashboard)
+    </label>
+    <div id="proj_mat_online_extra" class="bz_default_hidden indent">
+      <label for="proj_mat_online_desc" class="required">Material Description</label>
+      <input type="text" name="proj_mat_online_desc" id="proj_mat_online_desc">
+      <label for="proj_mat_online_link" class="required">Material Link</label>
+      <input type="text" name="proj_mat_online_link" id="proj_mat_online_link">
+    </div>
+  </div>
+  <div>
+    <input type="checkbox" name="proj_mat_file" id="proj_mat_file">
+    <label class="normal" for="proj_mat_file">
+      Upload File
+    </label>
+    <div id="proj_mat_file_extra" class="bz_default_hidden indent">
+      <label for="proj_mat_file_desc" class="required">File Description</label>
+      <input type="text" name="proj_mat_file_desc" id="proj_mat_file_desc">
+      <label for="proj_mat_file_attach" class="required">File Upload</label>
+      <input type="file" name="proj_mat_file_attach" id="proj_mat_file_attach">
+    </div>
+  </div>
+</div>
+
+<div class="field">
+  <label>PR Project Materials</label>
+  <div>
+    <input type="checkbox" name="pr_mat_online" id="pr_mat_online">
+    <label class="normal" for="pr_mat_online">
+      Online Documentation (e.g. comms plan)
+    </label>
+    <div id="pr_mat_online_extra" class="bz_default_hidden indent">
+      <label for="pr_mat_online_desc" class="required">Material Description</label>
+      <input type="text" name="pr_mat_online_desc" id="pr_mat_online_desc">
+      <label for="pr_mat_online_link" class="required">Material Link</label>
+      <input type="text" name="pr_mat_online_link" id="pr_mat_online_link">
+    </div>
+  </div>
+  <div>
+    <input type="checkbox" name="pr_mat_file" id="pr_mat_file">
+    <label class="normal" for="pr_mat_file">
+      Upload File
+    </label>
+    <div id="pr_mat_file_extra" class="bz_default_hidden indent">
+      <label for="pr_mat_file_desc" class="required">File Description</label>
+      <input type="text" name="pr_mat_file_desc" id="pr_mat_file_desc">
+      <label for="pr_mat_file_attach" class="required">File Upload</label>
+      <input type="file" name="pr_mat_file_attach" id="pr_mat_file_attach">
+    </div>
+  </div>
+</div>
+
+<div class="head">
+  Requirements
+</div>
+
+<div class="field">
+  <label for="metrica">Metrica Coverage Reporting Scope</label>
+  <select name="metrica" id="metrica">
+    <option>No</option>
+    <option>Yes</option>
+  </select>
+  <div id="metrica_extra" class="bz_default_hidden extra">
+    Please fill out the
+    <a href="https://basecamp.com/2256351/projects/2980983/messages/12008835" target="_blank">Metrica form</a>
+    and submit to Metrica no later than a week before project starts.
+  </div>
+</div>
+
+<div class="field" id="press_center_group">
+  <label>Press Center Update</label>
+  <input type="checkbox" name="press_center" id="press_center_post" value="Post on press pages">
+  <label for="press_center_post" class="normal">Post on press pages</label><br>
+  <input type="checkbox" name="press_center" id="press_center_library" value="Media Library update">
+  <label for="press_center_library" class="normal">Media Library update</label><br>
+  <input type="checkbox" name="press_center" id="press_center" value="Other:">
+  <label for="press_center" class="normal">Other:</label><br>
+  <input name="press_center_other" id="press_center_other" class="bz_default_hidden indent">
+</div>
+
+<div class="field" id="internal_resources_group">
+  <label>Internal Resources Needed</label>
+  <input type="text" name="resources" id="resources">
+  <input type="checkbox" name="internal_resources" id="internal_resources_spokesperson" value="Spokesperson">
+  <label for="internal_resources_spokesperson" class="normal">Spokesperson</label><br>
+  <input type="checkbox" name="internal_resources" id="internal_resources_staff" value="Demo Staff">
+  <label for="internal_resources_staff" class="normal">Demo Staff</label><br>
+  <input type="checkbox" name="internal_resources" id="internal_resources_support" value="Creative Support">
+  <label for="internal_resources_support" class="normal">Creative Support</label><br>
+  <input type="checkbox" name="internal_resources" id="internal_resources" value="Other:">
+  <label for="internal_resources" class="normal">Other:</label><br>
+  <input name="internal_resources_other" id="internal_resources_other" class="bz_default_hidden indent">
+</div>
+
+<div class="field" id="external_resources_group">
+  <label>External Resources Needed</label>
+  <input type="checkbox" name="external_resources" id="external_resources_pr" value="PR Agency Support">
+  <label for="external_resources_pr" class="normal">PR Agency Support</label><br>
+  <input type="checkbox" name="external_resources" id="external_resources_design" value="Design Support">
+  <label for="external_resources_design" class="normal">Design Support</label><br>
+  <input type="checkbox" name="external_resources" id="external_resources_community" value="Community Support">
+  <label for="external_resources_community" class="normal">Community Support</label><br>
+  <input type="checkbox" name="external_resources" id="external_resources" value="Other:">
+  <label for="external_resources" class="normal">Other:</label><br>
+  <input name="external_resources_other" id="external_resources_other" class="bz_default_hidden indent">
+</div>
+
+<div class="field">
+  <label for="localization">Localization Needed</label>
+  <select name="localization" id="localization">
+    <option>None</option>
+    <option>Yes - Agency Localization</option>
+    <option>Yes - Community Localization</option>
+    <option>Other:</option>
+  </select>
+  <input name="localization_other" id="localization_other" class="bz_default_hidden">
+</div>
+
+<div class="head">
+  Budget
+</div>
+
+<div class="field">
+  <label for="budget" class="required">Budget</label>
+  <select name="budget" id="budget">
+    <option value=""></option>
+    <option value="Covered">Covered in budget</option>
+    <option value="Extra">Extra budget required:</option>
+  </select>
+  <input name="budget_extra" id="budget_extra" class="bz_default_hidden">
+</div>
+
+<input type="submit" id="commit" value="Submit">
+
+<p>
+  [ <span class="required_star">*</span> <span class="required_explanation">Required Field</span> ]
+</p>
+
+</form>
+
+[% PROCESS global/footer.html.tmpl %]

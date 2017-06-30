@@ -1,0 +1,39 @@
+[%# This Source Code Form is subject to the terms of the Mozilla Public
+  # License, v. 2.0. If a copy of the MPL was not distributed with this
+  # file, You can obtain one at http://mozilla.org/MPL/2.0/.
+  #
+  # This Source Code Form is "Incompatible With Secondary Licenses", as
+  # defined by the Mozilla Public License, v. 2.0.
+  #%]
+
+[% USE Bugzilla %]
+[% cgi = Bugzilla.cgi +%]
+>>Project/Request Title:
+[%+ cgi.param('short_desc') %]
+
+>>Project Overview:
+[%+ cgi.param('overview') %]
+
+>> Creative Help Needed:
+Copy:   [% IF cgi.param('type_copy')   %] Yes [% ELSE %] No [% END %]
+Design: [% IF cgi.param('type_design') %] Yes [% ELSE %] No [% END %]
+Video:  [% IF cgi.param('type_video')  %] Yes [% ELSE %] No [% END %]
+Other:  [% IF cgi.param('type_other')  %][% cgi.param('type_other_text') %][% ELSE %]No[% END %]
+
+>>Creative Specs:
+[%+ cgi.param("specs") %]
+
+>>CTA and Design:
+[%+ cgi.param('cta_design') %]
+
+>>Expected Launch Date:
+[%+ cgi.param("launch_date") || 'Not provided' %]
+
+>>Mozilla Goal:
+[%+ IF cgi.param("goal_other") %][% cgi.param("goal_other") %][% ELSE %][% cgi.param("goal") %][% END %]
+
+>>Mozilla Creative Collective:
+[%+ cgi.param("collective") ? "Yes" : "No" %]
+
+>>Points of Contact:
+[%+ cgi.param('poc').join(', ') || 'Not provided' %]

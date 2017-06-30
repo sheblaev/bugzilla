@@ -1,0 +1,230 @@
+[%# This Source Code Form is subject to the terms of the Mozilla Public
+  # License, v. 2.0. If a copy of the MPL was not distributed with this
+  # file, You can obtain one at http://mozilla.org/MPL/2.0/.
+  #
+  # This Source Code Form is "Incompatible With Secondary Licenses", as
+  # defined by the Mozilla Public License, v. 2.0.
+  #%]
+
+[% IF who %]
+[%   who_title = ' (' _ who _ ')' %]
+[% ELSE %]
+[%   who_title = '' %]
+[% END %]
+
+[% INCLUDE global/header.html.tmpl
+  title = "User Activity Report" _ who_title
+  generate_api_token = 1
+  javascript_urls = [ "js/util.js", "js/field.js" ]
+  style_urls = [ "extensions/BMO/web/styles/reports.css" ]
+
+%]
+
+[% PROCESS "global/field-descs.none.tmpl" %]
+[% PROCESS bug/time.html.tmpl %]
+
+<form id="activity_form" name="activity_form" action="page.cgi" method="get">
+<input type="hidden" name="id" value="user_activity.html">
+<input type="hidden" name="action" value="run">
+<table id="parameters">
+
+<tr>
+  <th>
+    Who:
+  </th>
+  <td>
+    [% INCLUDE global/userselect.html.tmpl
+       id => "who"
+       name => "who"
+       value => who
+       size => 40
+       emptyok => 0
+       title => "One or more email address (comma delimited)"
+    %]
+    &nbsp;
+  </td>
+  <th>
+    Period:
+  </th>
+  <td>
+    <input type="text" id="from" name="from" size="11"
+      align="right" value="[% from FILTER html %]" maxlength="10"
+      onchange="updateCalendarFromField(this)">
+    <button type="button" class="calendar_button" id="button_calendar_from"
+      onclick="showCalendar('from')"><span>Calendar</span>
+    </button>
+    <div id="con_calendar_from"></div>
+    to
+    <input type="text" name="to" size="11" id="to"
+      align="right" value ="[% to FILTER html %]" maxlength="10"
+      onchange="updateCalendarFromField(this)">
+    <button type="button" class="calendar_button" id="button_calendar_to"
+      onclick="showCalendar('to')"><span>Calendar</span>
+    </button>
+    <div id="con_calendar_to"></div>
+  </td>
+  <th>
+    Group by:
+  </th>
+  <td>
+    <select name="group">
+      <option value="when" [% 'selected' IF group == 'when' %]>When</option>
+      <option value="bug" [% 'selected' IF group == 'bug' %]>[% terms.Bug %]</option>
+    </select>
+  </td>
+  <td>
+    <input type="submit" id="run" value="Generate Report">
+  </td>
+</tr>
+
+</table>
+[% IF debug_sql %]
+  <input type="hidden" name="debug" value="1">
+[% END %]
+</form>
+
+<script type="text/javascript">
+  createCalendar('from');
+  createCalendar('to');
+</script>
+
+[% IF action == 'run' %]
+
+[% IF debug_sql %]
+  <pre>[% debug_sql FILTER html %]</pre>
+[% END %]
+
+[% IF incomplete_data %]
+  <p>
+    There used to be an issue in <a href="http://www.bugzilla.org/">Bugzilla</a>
+    which caused activity data to be lost if there were a large number of cc's
+    or dependencies.  That has been fixed, but some data was already lost in
+    your activity table that could not be regenerated.  The changes that 
+    could not reliably determine are prefixed by '?'.
+  </p>
+[% END %]
+
+[% IF operations.size > 0 %]
+  <br>
+  <table border="1" cellpadding="4" cellspacing="0" id="report" class="hover">
+    <tr id="report-header">
+      [% IF who_count > 1 %]
+        <th>Who</th>
+      [% END %]
+      [% IF group == 'when' %]
+        <th class="sorted">[% INCLUDE group_when_link %]</th>
+        <th>[% INCLUDE group_bug_link %]</th>
+      [% ELSE %]
+        <th class="sorted">[% INCLUDE group_bug_link %]</th>
+        <th>[% INCLUDE group_when_link %]</th>
+      [% END %]
+      <th>What</th>
+      <th>Removed</th>
+      <th>Added</th>
+    </tr>
+
+    [% FOREACH operation = operations %]
+      [% tr_class = loop.count % 2 ? 'report_row_even' : 'report_row_odd' %]
+      [% FOREACH change = operation.changes %]
+        <tr class="[% tr_class FILTER none %]">
+          [% IF loop.count == 1 %]
+            [% IF who_count > 1 %]
+              <td>[% operation.who FILTER email FILTER html %]</td>
+            [% END %]
+            [% IF group == 'when' %]
+              <td>[% change.when FILTER time FILTER no_break %]</td>
+              <td>[% operation.bug FILTER bug_link(operation.bug) FILTER none %]</td>
+            [% ELSE %]
+              <td>[% operation.bug FILTER bug_link(operation.bug) FILTER none %]</td>
+              <td>[% change.when FILTER time FILTER no_break %]</td>
+            [% END %]
+          [% ELSE %]
+            [% IF who_count > 1 %]
+              <td>&nbsp;</td>
+            [% END %]
+            <td>&nbsp;</td>
+            [% IF group == 'when' %]
+              <td>&nbsp;</td>
+            [% ELSE %]
+              <td>[% change.when FILTER time FILTER no_break %]</td>
+            [% END %]
+          [% END %]
+          <td>
+            [% IF change.attachid %]
+              <a href="attachment.cgi?id=[% change.attachid FILTER uri %]"
+                 title="[% change.attach.description FILTER html %]
+                        [%- %] - [% change.attach.filename FILTER html %]"
+              >Attachment #[% change.attachid FILTER html %]</a>
+            [% END %]
+            [%IF change.comment.defined && change.fieldname == 'longdesc' %]
+               [% "Comment $change.comment.count"
+                  FILTER bug_link(operation.bug, comment_num => change.comment.count)
+                  FILTER none %]
+            [% ELSIF change.comment.defined && change.fieldname == 'comment_tag' %]
+               [% "Comment $change.comment.count Tagged"
+                  FILTER bug_link(operation.bug, comment_num => change.comment.count)
+                  FILTER none %]
+            [% ELSE %]
+              [%+ field_descs.${change.fieldname} FILTER html %]
+            [% END %]
+          </td>
+          [% PROCESS change_column change_type = change.removed %]
+          [% PROCESS change_column change_type = change.added %]
+        </tr>
+      [% END %]
+    [% END %]
+  </table>
+  <p>
+    <a href="buglist.cgi?bug_id=[% bug_ids.join(',') FILTER uri %]">
+    Show as a [% terms.Bug %] List</a>
+  </p>
+
+[% ELSE %]
+  <p>
+    No changes.
+  </p>
+[% END %]
+
+[% BLOCK change_column %]
+  <td>
+    [% IF change_type.defined %]
+      [% IF change.fieldname == 'estimated_time' ||
+            change.fieldname == 'remaining_time' ||
+            change.fieldname == 'work_time' %]
+        [% PROCESS formattimeunit time_unit=change_type %]
+      [% ELSIF change.fieldname == 'blocked' ||
+               change.fieldname == 'dependson' %]
+        [% change_type FILTER bug_list_link FILTER none %]
+      [% ELSIF change.fieldname == 'assigned_to' ||
+               change.fieldname == 'reporter' ||
+               change.fieldname == 'qa_contact' ||
+               change.fieldname == 'cc' ||
+               change.fieldname == 'flagtypes.name' %]
+        [% display_value(change.fieldname, change_type) FILTER email FILTER html %]
+      [% ELSE %]
+        [% display_value(change.fieldname, change_type) FILTER html %]
+      [% END %]
+    [% ELSE %]
+      &nbsp;
+    [% END %]
+  </td>
+[% END %]
+[% END %]
+
+[% INCLUDE global/footer.html.tmpl %]
+
+[% BLOCK group_when_link %]
+  <a href="page.cgi?id=user_activity.html&amp;action=run&amp;
+    [%~%]who=[% who FILTER uri %]&amp;
+    [%~%]from=[% from FILTER uri %]&amp;
+    [%~%]to=[% to FILTER uri %]&amp;
+    [%~%]group=when">When</a>
+[% END %]
+
+[% BLOCK group_bug_link %]
+  <a href="page.cgi?id=user_activity.html&amp;action=run&amp;
+    [%~%]who=[% who FILTER uri %]&amp;
+    [%~%]from=[% from FILTER uri %]&amp;
+    [%~%]to=[% to FILTER uri %]&amp;
+    [%~%]group=bug">[% terms.Bug %]</a>
+[% END %]
